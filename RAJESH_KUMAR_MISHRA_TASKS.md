@@ -20,7 +20,107 @@
 
 ---
 
-## 🛠 1. Project Setup
+## � Backend File Structure
+
+```
+medTech-backend/
+├── manage.py                          ← Entry point
+├── requirements.txt                   ← Python dependencies
+├── .env                               ← Environment variables
+│
+├── medtech/                           ← Project config
+│   ├── __init__.py
+│   ├── settings.py                    ← Django/Flask settings, DB config, JWT config
+│   ├── urls.py                        ← Root URL routing
+│   ├── wsgi.py                        ← WSGI entry point
+│   └── asgi.py                        ← ASGI entry point
+│
+├── accounts/                          ← 🔐 Authentication & Users
+│   ├── __init__.py
+│   ├── apps.py
+│   ├── models.py                      ← User model (email-based, role field)
+│   ├── serializers.py                 ← Register, Login, Profile serializers
+│   ├── views.py                       ← register, login, profile, request-otp, forgot-password
+│   ├── urls.py                        ← /api/auth/* routes
+│   ├── admin.py
+│   └── migrations/
+│       ├── __init__.py
+│       └── 0001_initial.py
+│
+├── patients/                          ← 👤 Patient Profiles & Records
+│   ├── __init__.py
+│   ├── apps.py
+│   ├── models.py                      ← Patient model (UHID, demographics, medical info)
+│   ├── serializers.py                 ← Patient profile & search serializers
+│   ├── views.py                       ← patient_profile, patient_records, patient_prescriptions
+│   ├── urls.py                        ← /api/patient/* routes
+│   ├── admin.py
+│   └── migrations/
+│       ├── __init__.py
+│       └── 0001_initial.py
+│
+├── doctors/                           ← 🩺 Doctor Module
+│   ├── __init__.py
+│   ├── apps.py
+│   ├── models.py                      ← Doctor, Visit, Appointment models
+│   ├── serializers.py                 ← Doctor, Visit, Prescription serializers
+│   ├── views.py                       ← search_patient, patient_details, create_visit, create_prescription, appointments
+│   ├── urls.py                        ← /api/doctor/* routes
+│   ├── admin.py
+│   └── migrations/
+│       ├── __init__.py
+│       └── 0001_initial.py
+│
+├── prescriptions/                     ← 💊 E-Prescriptions
+│   ├── __init__.py
+│   ├── apps.py
+│   ├── models.py                      ← Prescription, PrescriptionItem models (rx_code, validity)
+│   ├── serializers.py                 ← Prescription & PrescriptionItem serializers
+│   ├── admin.py
+│   └── migrations/
+│       ├── __init__.py
+│       └── 0001_initial.py
+│
+├── pharmacy/                          ← 🏪 Pharmacy Module
+│   ├── __init__.py
+│   ├── apps.py
+│   ├── models.py                      ← Pharmacy, DispenseLog models
+│   ├── serializers.py                 ← Pharmacy & DispenseLog serializers
+│   ├── views.py                       ← verify_prescription, dispense_prescription, history
+│   ├── urls.py                        ← /api/pharmacy/* routes
+│   ├── admin.py
+│   └── migrations/
+│       ├── __init__.py
+│       └── 0001_initial.py
+│
+├── records/                           ← 📁 Medical Records
+│   ├── __init__.py
+│   ├── apps.py
+│   ├── models.py                      ← MedicalRecord model (lab, scan, discharge, etc.)
+│   ├── serializers.py                 ← MedicalRecord serializer
+│   ├── admin.py
+│   └── migrations/
+│       ├── __init__.py
+│       └── 0001_initial.py
+│
+└── core/                              ← ⚙️ Admin, Utilities & Shared
+    ├── __init__.py
+    ├── apps.py
+    ├── models.py                      ← Hospital, AuditLog models
+    ├── serializers.py                 ← Hospital & AuditLog serializers
+    ├── views.py                       ← admin_stats, HospitalViewSet, audit_logs
+    ├── admin_urls.py                  ← /api/admin/* routes
+    ├── permissions.py                 ← IsPatient, IsDoctor, IsPharmacy, IsAdmin
+    ├── utils.py                       ← generate_uhid, generate_rx_code, hash_govt_id, create_audit_log
+    ├── admin.py
+    └── migrations/
+        ├── __init__.py
+        └── 0001_initial.py
+```
+
+---
+
+## �🛠 1. Project Setup
 
 ### How to run:
 ```bash
