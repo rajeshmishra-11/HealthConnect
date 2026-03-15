@@ -12,24 +12,41 @@ import api from '../services/api';
 const PatientDashboard = ({ darkMode, setDarkMode }) => {
     const { user } = useAuth();
     const [stats, setStats] = useState(null);
-    const [visits, setVisits] = useState([]);
+    const [history, setHistory] = useState([]);
     const [loading, setLoading] = useState(true);
     const [copied, setCopied] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [statsRes, visitsRes] = await Promise.all([
+                const [statsRes, visitsRes, prescriptionsRes] = await Promise.all([
                     api.get('/patient/stats'),
-                    api.get('/patient/visits')
+                    api.get('/patient/visits'),
+                    api.get('/patient/prescriptions')
                 ]);
                 setStats(statsRes.data);
-                setVisits(visitsRes.data);
+                
+                // Combine and sort visits and prescriptions for Clinical History
+                const formattedVisits = visitsRes.data.map(v => ({ ...v, itemType: 'visit' }));
+                const formattedRxs = prescriptionsRes.data.map(p => ({
+                    ...p, 
+                    itemType: 'prescription',
+                    date: p.issue_date,
+                    time: 'N/A' // prescriptions don't have a time in the current model
+                }));
+                
+                const combined = [...formattedVisits, ...formattedRxs].sort((a, b) => {
+                    const dateA = new Date(a.date);
+                    const dateB = new Date(b.date);
+                    return dateB - dateA; // descending
+                });
+                
+                setHistory(combined);
             } catch (error) {
                 console.error("Failed to fetch dashboard data:", error);
                 // Fallback empty state on error
                 setStats({ medical_records: 0, prescriptions: 0, upcoming_visits: 0, health_score: 0 });
-                setVisits([]);
+                setHistory([]);
             } finally {
                 setLoading(false);
             }
@@ -189,7 +206,7 @@ const PatientDashboard = ({ darkMode, setDarkMode }) => {
 
                 {/* Main Grid */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '32px' }}>
-                    {/* Recent Visits */}
+                    {/* Recent Visits & Prescriptions Timeline */}
                     <div style={{ background: 'var(--card-bg)', borderRadius: '24px', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
                         <div style={{ padding: '24px 30px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <h2 style={{ fontSize: '18px', fontWeight: '800', fontFamily: 'Outfit, sans-serif', color: 'var(--text)' }}>Clinical History</h2>
@@ -198,27 +215,40 @@ const PatientDashboard = ({ darkMode, setDarkMode }) => {
                             </Link>
                         </div>
                         <div style={{ padding: '0' }}>
-                            {visits.map((v, i) => (
-                                <div key={v.id} style={{
+                            {history.length === 0 && !loading && (
+                                <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                                    No recent clinical history available.
+                                </div>
+                            )}
+                            {history.slice(0, 10).map((item, i) => (
+                                <div key={`${item.itemType}-${item.id}`} style={{
                                     display: 'flex', alignItems: 'center', gap: '20px',
                                     padding: '20px 30px',
-                                    borderBottom: i < visits.length - 1 ? '1px solid var(--border)' : 'none',
+                                    borderBottom: i < Math.min(history.length, 10) - 1 ? '1px solid var(--border)' : 'none',
                                     transition: 'background 0.2s',
                                     cursor: 'pointer'
                                 }} onMouseOver={(e) => e.currentTarget.style.background = 'var(--surface)'} onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}>
                                     <div style={{
                                         width: '44px', height: '44px', borderRadius: '12px',
-                                        background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        fontSize: '11px', fontWeight: '800', color: 'var(--primary)', textAlign: 'center', lineHeight: '1.1'
+                                        background: item.itemType === 'prescription' ? 'rgba(124, 58, 237, 0.08)' : 'var(--surface)', 
+                                        display: 'flex', gap: '2px', alignItems: 'center', justifyContent: 'center',
+                                        fontSize: '11px', fontWeight: '800', 
+                                        color: item.itemType === 'prescription' ? '#7c3aed' : 'var(--primary)', 
+                                        textAlign: 'center', lineHeight: '1.1'
                                     }}>
-                                        {v.doctor.split(' ')[1].slice(0, 3).toUpperCase()}
+                                        {item.itemType === 'prescription' ? <Pill size={20} /> : (item.doctor_name || item.doctor || 'DR').split(' ').pop()?.slice(0, 3).toUpperCase()}
                                     </div>
                                     <div style={{ flex: 1 }}>
-                                        <div style={{ fontWeight: '700', fontSize: '16px', color: 'var(--text)', fontFamily: 'Outfit, sans-serif' }}>{v.doctor}</div>
-                                        <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '2px' }}>{v.facility} — {v.diagnosis}</div>
+                                        <div style={{ fontWeight: '700', fontSize: '16px', color: 'var(--text)', fontFamily: 'Outfit, sans-serif' }}>
+                                            {item.itemType === 'prescription' ? `Prescription: ${item.rx_code}` : (item.doctor_name || item.doctor || 'Doctor')}
+                                        </div>
+                                        <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                                            {item.facility} — {item.diagnosis}
+                                        </div>
                                     </div>
                                     <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '600', textAlign: 'right' }}>
-                                        {v.date}<br />{v.time}
+                                        {item.date}<br />
+                                        {item.itemType === 'prescription' ? <span style={{ color: '#d97706', fontSize: '10px', textTransform: 'uppercase' }}>{item.status}</span> : item.time}
                                     </div>
                                 </div>
                             ))}

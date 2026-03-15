@@ -11,37 +11,33 @@ export const AuthProvider = ({ children }) => {
 
     useEffect(() => {
         const token = localStorage.getItem("doctor_token");
-        if (token) {
-            // Decode user info from token (simplistic approach for now)
-            // Usually you'd fetch user details from /api/auth/me/
-            setUser({ role: "doctor", token });
+        const doctorData = localStorage.getItem("doctor_data");
+        if (token && doctorData) {
+            try {
+                setUser({ ...JSON.parse(doctorData), token });
+            } catch {
+                setUser({ role: "doctor", token });
+            }
         }
         setLoading(false);
     }, []);
 
     const login = async (email, password) => {
-        // Dummy testing credentials
-        if (email === "doctor@healthconnect.com" && password === "password123") {
-            const dummyUser = { id: 1, name: "Sameer", role: "doctor" };
-            const dummyToken = "dummy-jwt-token-for-testing";
-            localStorage.setItem("doctor_token", dummyToken);
-            setUser({ ...dummyUser, token: dummyToken });
-            return { success: true };
-        }
-
         try {
-            const response = await api.post("/auth/login/", { email, password, role: "doctor" });
-            const { access, doctor } = response.data;
-            localStorage.setItem("doctor_token", access);
-            setUser({ ...doctor, token: access });
+            const response = await api.post("/auth/login", { email, password });
+            const { token, doctor } = response.data;
+            localStorage.setItem("doctor_token", token);
+            localStorage.setItem("doctor_data", JSON.stringify(doctor));
+            setUser({ ...doctor, token });
             return { success: true };
         } catch (error) {
-            return { success: false, message: error.response?.data?.error || "Login failed" };
+            return { success: false, message: error.response?.data?.message || "Login failed. Please check your credentials." };
         }
     };
 
     const logout = () => {
         localStorage.removeItem("doctor_token");
+        localStorage.removeItem("doctor_data");
         setUser(null);
         window.location.href = "/login";
     };

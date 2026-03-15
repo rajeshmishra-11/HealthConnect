@@ -19,19 +19,34 @@ const MyRecords = ({ darkMode, setDarkMode }) => {
     useEffect(() => {
         const load = async () => {
             try {
-                const response = await api.get('/patient/records');
-                // The backend provides doctor_name but UI currently uses doctor
-                const formattedRecords = response.data.map(record => ({
+                const [recordsRes, prescriptionsRes] = await Promise.all([
+                    api.get('/patient/records'),
+                    api.get('/patient/prescriptions')
+                ]);
+
+                const formattedRecords = recordsRes.data.map(record => ({
                     ...record,
                     doctor: record.doctor_name || record.doctor,
-                    // The backend provides type ("LAB", "SCAN") but UI uses category
                     category: record.type === 'LAB' ? 'Lab Report' :
                               record.type === 'SCAN' ? 'Lab Report' : 
                               record.type === 'SCRIPT' ? 'Prescription' :
                               record.type === 'DISCHARGE' ? 'Clinical Note' :
                               record.type === 'VACCINE' ? 'Vaccination' : 'Clinical Note'
                 }));
-                setRecords(formattedRecords);
+
+                const formattedRxs = prescriptionsRes.data.map(rx => ({
+                    ...rx,
+                    title: `Prescription: ${rx.rx_code}`,
+                    doctor: rx.doctor_name || 'System',
+                    date: rx.issue_date,
+                    category: 'Prescription'
+                }));
+
+                const combined = [...formattedRecords, ...formattedRxs].sort((a, b) => {
+                    return new Date(b.date) - new Date(a.date);
+                });
+
+                setRecords(combined);
             } catch (error) {
                 console.error("Failed to load records:", error);
             } finally {

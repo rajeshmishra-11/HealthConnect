@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
-import { mockDb } from "../services/mockDatabase";
 import {
     Search,
     User,
@@ -26,7 +25,8 @@ const SearchPatient = () => {
 
     const handleSearch = async (e) => {
         if (e) e.preventDefault();
-        if (!searchValue.trim()) {
+        const query = searchValue.trim();
+        if (!query) {
             setResults([]);
             setSearched(false);
             return;
@@ -37,16 +37,20 @@ const SearchPatient = () => {
         setSearched(true);
 
         try {
-            // In a real app: const response = await api.get(`/doctor/search/?type=${searchType}&value=${searchValue}`);
-            // setResults(response.data.results);
-
-            const data = mockDb.searchPatients(searchValue);
-
-            setTimeout(() => {
-                setResults(data);
-                setIsSearching(false);
-            }, 800);
+            const response = await api.get(`/patients/search?q=${encodeURIComponent(query)}`);
+            const patients = response.data.map(p => ({
+                id: p.health_id,
+                name: p.name,
+                healthId: p.health_id,
+                phone: p.phone || "N/A",
+                gender: p.gender || "N/A",
+                bloodGroup: p.blood_group || "N/A",
+                lastVisit: "Recent"
+            }));
+            setResults(patients);
+            setIsSearching(false);
         } catch (err) {
+            console.error("Search error:", err);
             setError("Failed to fetch patients. Please try again.");
             setIsSearching(false);
         }
@@ -54,7 +58,6 @@ const SearchPatient = () => {
 
     const searchTypes = [
         { id: "healthId", label: "Health ID (UHID)", icon: Fingerprint, placeholder: "e.g. HID-1234-5678" },
-        { id: "phone", label: "Phone Number", icon: Phone, placeholder: "e.g. 9876543210" },
         { id: "govtId", label: "Aadhaar / Govt ID", icon: User, placeholder: "Enter Government ID" },
     ];
 
@@ -141,7 +144,7 @@ const SearchPatient = () => {
                             {results.map((patient) => (
                                 <div
                                     key={patient.id}
-                                    onClick={() => navigate(`/patient/${patient.id}`)}
+                                    onClick={() => navigate(`/patient/${patient.healthId}`)}
                                     className="bg-card p-6 rounded-2xl border border-border shadow-sm hover:border-primary/50 hover:shadow-md transition-all cursor-pointer group flex flex-col md:flex-row md:items-center justify-between gap-6"
                                 >
                                     <div className="flex items-center gap-5">
@@ -182,12 +185,6 @@ const SearchPatient = () => {
                                 We couldn't find any patient matching "{searchValue}". <br />
                                 <span className="font-bold">Suggestions:</span> Try searching for "Rahul", "Anita", or "9876543210".
                             </p>
-                            <button
-                                onClick={() => { setSearchValue("Rahul"); handleSearch(); }}
-                                className="mt-4 text-xs font-bold text-primary hover:underline"
-                            >
-                                Try sample search: "Rahul"
-                            </button>
                         </div>
                     )
                 ) : (

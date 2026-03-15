@@ -27,6 +27,7 @@ CREATE TABLE `doctors` (
   `name` varchar(255) NOT NULL,
   `specialization` varchar(255) DEFAULT NULL,
   `email` varchar(255) DEFAULT NULL,
+  `password_hash` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`)
 ) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
