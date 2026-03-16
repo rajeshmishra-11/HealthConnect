@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import api from "../services/api";
-import { mockDb } from "../services/mockDatabase";
 import VitalsForm from "../components/common/VitalsForm";
 import {
     Stethoscope,
@@ -18,7 +17,7 @@ import {
 const CreateVisit = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const patientId = searchParams.get("patientId");
+    const patientId = searchParams.get("patientId"); // This is the UHID
 
     const [patient, setPatient] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -46,10 +45,12 @@ const CreateVisit = () => {
 
         const fetchPatient = async () => {
             try {
-                const data = mockDb.getPatientById(patientId);
-                if (data) {
-                    setPatient(data);
-                }
+                const response = await api.get(`/patients/${patientId}`);
+                const data = response.data.profile;
+                setPatient({
+                    ...data,
+                    healthId: data.health_id
+                });
                 setLoading(false);
             } catch (error) {
                 console.error("Error fetching patient", error);
@@ -65,22 +66,17 @@ const CreateVisit = () => {
         setIsSubmitting(true);
 
         try {
-            const formDataToSave = {
-                patientId,
+            await api.post("/visits", {
+                uhid: patientId,
                 ...formData,
                 vitals,
-                doctor: "Dr. Sameer"
-            };
-
-            // In real app: await api.post("/doctor/visits/", formDataToSave);
-
-            // Mock persistence
-            mockDb.addVisit(formDataToSave);
+                facility: "HealthConnect Clinic"
+            });
 
             setTimeout(() => {
                 setIsSubmitting(false);
                 navigate(`/patient/${patientId}?visitCreated=true`);
-            }, 1000);
+            }, 500);
         } catch (error) {
             console.error("Failed to create visit", error);
             setIsSubmitting(false);
@@ -110,7 +106,7 @@ const CreateVisit = () => {
                     <h1 className="text-3xl font-bold text-foreground">Record New Visit</h1>
                     <p className="text-muted-foreground mt-1 flex items-center gap-2">
                         <User size={14} className="text-primary" />
-                        Patient: <span className="font-bold text-foreground">{patient.name}</span> ({patient.healthId})
+                        Patient: <span className="font-bold text-foreground">{patient?.name}</span> ({patient?.healthId})
                     </p>
                 </div>
             </div>

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import api from "../services/api";
-import { mockDb } from "../services/mockDatabase";
 import MedicineRow from "../components/common/MedicineRow";
 import {
     PencilLine,
@@ -18,7 +17,7 @@ import {
 const WritePrescription = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const patientId = searchParams.get("patientId");
+    const patientId = searchParams.get("patientId"); // This is the UHID
 
     const [patient, setPatient] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -38,10 +37,12 @@ const WritePrescription = () => {
 
         const fetchPatient = async () => {
             try {
-                const data = mockDb.getPatientById(patientId);
-                if (data) {
-                    setPatient(data);
-                }
+                const response = await api.get(`/patients/${patientId}`);
+                const data = response.data.profile;
+                setPatient({
+                    ...data,
+                    healthId: data.health_id
+                });
                 setLoading(false);
             } catch (error) {
                 console.error("Error fetching patient", error);
@@ -74,22 +75,19 @@ const WritePrescription = () => {
         setIsSubmitting(true);
 
         try {
-            const payload = {
-                patientId,
+            const response = await api.post("/prescriptions", {
+                uhid: patientId,
                 medicines,
-                notes,
-                doctor: "Dr. Sameer"
-            };
+                diagnosis: notes || "General Consultation",
+                facility: "HealthConnect Clinic"
+            });
 
-            // In real app: const response = await api.post("/doctor/prescriptions/", payload);
-
-            // Mock persistence
-            const newPrescription = mockDb.addPrescription(payload);
+            const newPrescription = response.data;
 
             setTimeout(() => {
                 setIsSubmitting(false);
-                navigate(`/prescriptions/success?rxCode=${newPrescription.rxCode}&patientName=${encodeURIComponent(patient.name)}`);
-            }, 1200);
+                navigate(`/prescriptions/success?rxCode=${newPrescription.rx_code}&patientName=${encodeURIComponent(patient.name)}`);
+            }, 500);
         } catch (error) {
             console.error("Failed to generate prescription", error);
             setIsSubmitting(false);
@@ -119,7 +117,7 @@ const WritePrescription = () => {
                     <h1 className="text-3xl font-bold text-foreground">Digital Prescription</h1>
                     <p className="text-muted-foreground mt-1 flex items-center gap-2">
                         <User size={14} className="text-primary" />
-                        Patient: <span className="font-bold text-foreground">{patient.name}</span> ({patient.healthId})
+                        Patient: <span className="font-bold text-foreground">{patient?.name}</span> ({patient?.healthId})
                     </p>
                 </div>
             </div>

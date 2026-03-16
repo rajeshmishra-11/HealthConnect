@@ -10,10 +10,8 @@ import {
     PencilLine,
     ChevronRight,
     ArrowUpRight,
-    Loader2,
-    RefreshCw
+    Loader2
 } from "lucide-react";
-import { mockDb } from "../services/mockDatabase";
 import api from "../services/api";
 
 const DoctorDashboard = () => {
@@ -25,7 +23,7 @@ const DoctorDashboard = () => {
     useEffect(() => {
         const fetchDashboardData = async () => {
             try {
-                const response = await api.get("/doctor/dashboard/");
+                const response = await api.get("/doctor/dashboard");
                 setStats(response.data.stats || {
                     total_patients: 124,
                     today_visits: 12,
@@ -67,13 +65,6 @@ const DoctorDashboard = () => {
         fetchDashboardData();
     }, []);
 
-    const handleReset = () => {
-        if (window.confirm("This will reset all session data (visits/prescriptions) to default. Continue?")) {
-            mockDb.resetDatabase();
-            window.location.reload();
-        }
-    };
-
     if (loading) {
         return (
             <div className="flex items-center justify-center h-[60vh]">
@@ -83,7 +74,7 @@ const DoctorDashboard = () => {
     }
 
     const statCards = [
-        { label: "Total Patients", value: stats.total_patients, icon: Users, color: "text-blue-500", bg: "bg-blue-500/10" },
+        { label: "Total Patients", value: stats.total_patients_seen || stats.total_patients || 0, icon: Users, color: "text-blue-500", bg: "bg-blue-500/10" },
         { label: "Today's Visits", value: stats.today_visits, icon: Calendar, color: "text-green-500", bg: "bg-green-500/10" },
         { label: "Prescriptions Written", value: stats.prescriptions_written, icon: ClipboardList, color: "text-purple-500", bg: "bg-purple-500/10" },
         { label: "Pending Tasks", value: stats.pending_tasks, icon: Clock, color: "text-orange-500", bg: "bg-orange-500/10" },
@@ -93,7 +84,6 @@ const DoctorDashboard = () => {
         { label: "Search Patient", href: "/search", icon: Search, color: "bg-primary" },
         { label: "Create Visit", href: "/visits/create", icon: PlusCircle, color: "bg-green-600" },
         { label: "Write Prescription", href: "/prescriptions/create", icon: PencilLine, color: "bg-purple-600" },
-        { label: "Reset Database", onClick: handleReset, icon: RefreshCw, color: "bg-red-500" },
     ];
 
     return (
@@ -143,7 +133,7 @@ const DoctorDashboard = () => {
                                 {appointments.map((apt) => (
                                     <tr
                                         key={apt.id}
-                                        onClick={() => navigate(`/patient/${apt.patient_id || 'p1'}`)}
+                                        onClick={() => navigate(`/patient/${apt.patient_uhid || 'p1'}`)}
                                         className="hover:bg-muted/30 transition-colors group cursor-pointer"
                                     >
                                         <td className="px-6 py-4 text-sm font-semibold text-foreground">{apt.patient_name}</td>
