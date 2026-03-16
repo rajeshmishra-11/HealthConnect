@@ -2,8 +2,10 @@ import subprocess
 import os
 import sys
 
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 def start_frontend():
-    frontend_dir = os.path.join(os.path.dirname(__file__), '..', 'frontend')
+    frontend_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'frontend')
     frontend_dir = os.path.abspath(frontend_dir)
     
     print(f"Navigating to frontend directory: {frontend_dir}")
@@ -12,7 +14,6 @@ def start_frontend():
         return
 
     print("Step 1: Installing dependencies (this might take a minute)...")
-    # Using shell=True is generally safer for npm on Windows
     subprocess.run("npm install", shell=True, cwd=frontend_dir)
     
     print("\nStep 2: Starting the React frontend...")
