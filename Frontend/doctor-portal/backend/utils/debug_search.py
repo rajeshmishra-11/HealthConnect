@@ -1,7 +1,10 @@
+import os
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from app import create_app
 from models import db, User
 from sqlalchemy import or_
-import sys
 
 app = create_app()
 

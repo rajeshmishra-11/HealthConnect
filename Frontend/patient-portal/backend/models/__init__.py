@@ -158,7 +158,7 @@ class Prescription(db.Model):
             "medicines": self.get_medicines(),
             "pharmacy_note": self.pharmacy_note,
             "transaction_id": self.transaction_id,
-            "created_at": self.created_at.strftime('%Y-%m-%d %H:%M:%S') if self.created_at else None
+            "created_at": self.created_at.strftime('%Y-%m-%d') if self.created_at else None
         }
 
 class Visit(db.Model):

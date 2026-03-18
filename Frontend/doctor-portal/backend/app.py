@@ -3,6 +3,7 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 import os
 from models import db
+from src.config import Config
 from flask_jwt_extended import JWTManager
 
 # Load environment variables
@@ -14,10 +15,7 @@ def create_app():
     app = Flask(__name__, static_folder=frontend_dist)
     CORS(app)
 
-    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev_key')
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'jwt-secret-string')
+    app.config.from_object(Config)
 
     db.init_app(app)
     jwt = JWTManager(app)

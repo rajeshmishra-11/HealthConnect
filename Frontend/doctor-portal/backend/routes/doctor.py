@@ -3,6 +3,7 @@ from models import db, Doctor, User, MedicalRecord, Prescription, Visit
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime
 from sqlalchemy import or_
+from services.prescription_service import generate_rx_code
 
 doctor_bp = Blueprint('doctor_bp', __name__)
 
@@ -122,11 +123,6 @@ def get_visits(uhid):
         
     visits = Visit.query.filter_by(patient_id=patient.id).order_by(Visit.date.desc()).all()
     return jsonify([v.to_dict() for v in visits]), 200
-
-def generate_rx_code():
-    import random
-    chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-    return 'RX' + ''.join(random.choices(chars, k=6))
 
 @doctor_bp.route('/prescriptions', methods=['POST'], strict_slashes=False)
 @jwt_required()
