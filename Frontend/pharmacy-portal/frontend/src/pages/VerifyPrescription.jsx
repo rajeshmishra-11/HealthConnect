@@ -2,28 +2,7 @@ import React, { useState } from "react";
 import { Search, AlertCircle, CheckCircle2, Loader2, RotateCcw } from "lucide-react";
 import PrescriptionCard from "../components/common/PrescriptionCard";
 import DispenseConfirmModal from "../components/common/DispenseConfirmModal";
-
-// Mock prescription data for testing
-const mockPrescriptions = {
-    "RX-A7B3K9M2": {
-        status: "valid",
-        prescription: {
-            rx_code: "RX-A7B3K9M2",
-            patient: { name: "Aakash Modi", health_id: "HID-A7B3-K9M2" },
-            doctor: { name: "Dr. Sharma", specialization: "General Medicine" },
-            date: "2026-04-07",
-            medicines: [
-                { name: "Paracetamol 500mg", dosage: "1 Tablet", duration: "5 Days", instructions: "1-0-1 (After Food)" },
-                { name: "Azithromycin 250mg", dosage: "1 Capsule", duration: "3 Days", instructions: "0-0-1 (Night)" },
-            ],
-            notes: "Complete the full course of antibiotics. Follow up after 5 days if symptoms persist.",
-        },
-    },
-    "RX-B8C4L0N3": {
-        status: "dispensed",
-        message: "Already dispensed on 2026-03-09",
-    },
-};
+import api from "../services/api";
 
 const VerifyPrescription = () => {
     const [rxCode, setRxCode] = useState("");
@@ -42,34 +21,43 @@ const VerifyPrescription = () => {
         setError("");
         setDispensed(false);
 
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 800));
+        try {
+            const upperCode = rxCode.toUpperCase().trim();
+            const response = await api.get(`/pharmacy/verify/${upperCode}`);
+            const data = response.data;
 
-        const upperCode = rxCode.toUpperCase().trim();
-        const mockResult = mockPrescriptions[upperCode];
-
-        if (mockResult) {
-            if (mockResult.status === "valid") {
-                setResult(mockResult.prescription);
-            } else if (mockResult.status === "dispensed") {
-                setError(mockResult.message);
+            if (data.status === "valid") {
+                setResult(data.prescription);
+            } else if (data.status === "dispensed") {
+                setError(data.message);
             }
-        } else {
-            setError("Prescription not found. Please check the RX code and try again.");
+        } catch (err) {
+            if (err.response?.status === 404) {
+                setError("Prescription not found. Please check the RX code and try again.");
+            } else {
+                setError(err.response?.data?.message || "Failed to verify prescription. Please try again.");
+            }
+        } finally {
+            setLoading(false);
         }
-
-        setLoading(false);
     };
 
     const handleDispense = async () => {
         setShowModal(false);
         setLoading(true);
 
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 600));
-
-        setDispensed(true);
-        setLoading(false);
+        try {
+            const response = await api.post(`/pharmacy/dispense/${result.rx_code}`);
+            if (response.data.status === "success") {
+                setDispensed(true);
+            } else {
+                setError(response.data.message || "Failed to dispense prescription.");
+            }
+        } catch (err) {
+            setError(err.response?.data?.message || "Failed to dispense prescription. Please try again.");
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleReset = () => {
@@ -95,7 +83,7 @@ const VerifyPrescription = () => {
                     </div>
                     <input
                         type="text"
-                        placeholder="RX-A7B3K9M2"
+                        placeholder="Enter RX Code (e.g. RXA7B3K9)"
                         className="block w-full pl-12 pr-4 py-3.5 border border-border rounded-xl bg-card text-foreground font-mono text-lg transition-all focus:ring-2 focus:ring-primary focus:border-primary outline-none shadow-sm"
                         value={rxCode}
                         onChange={(e) => setRxCode(e.target.value)}
