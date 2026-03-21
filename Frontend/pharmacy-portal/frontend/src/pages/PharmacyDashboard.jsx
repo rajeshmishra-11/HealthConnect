@@ -1,28 +1,40 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import api from "../services/api";
 import StatsCard from "../components/common/StatsCard";
-import { ClipboardCheck, Clock, XCircle, PackageCheck, ArrowRight } from "lucide-react";
-
-// Mock data for dashboard
-const mockStats = {
-    verified_today: 12,
-    pending: 5,
-    rejected: 2,
-    total_dispensed: 847,
-};
-
-const mockRecentActivity = [
-    { rx_code: "RX-A7B3K9M2", patient: "Sarah Jenkins", doctor: "Dr. Robert Aris", medicines: "Amoxicillin 500mg, Ibuprofen", time: "10:45 AM", status: "Dispensed" },
-    { rx_code: "RX-B8C4L0N3", patient: "Michael Chen", doctor: "Dr. Elena Gilbert", medicines: "Metformin, Atorvastatin", time: "11:22 AM", status: "Dispensed" },
-    { rx_code: "RX-C9D5M1P4", patient: "James Wilson", doctor: "Dr. Sarah Miller", medicines: "Lisinopril, Amlodipine", time: "11:30 AM", status: "Dispensed" },
-    { rx_code: "RX-D0E6N2Q5", patient: "Emma Davis", doctor: "Dr. Arun Patel", medicines: "Omeprazole 20mg", time: "12:05 PM", status: "Pending" },
-    { rx_code: "RX-E1F7O3R6", patient: "Raj Sharma", doctor: "Dr. Smith", medicines: "Cetirizine, Montelukast", time: "12:30 PM", status: "Pending" },
-];
+import { ClipboardCheck, Clock, XCircle, PackageCheck, ArrowRight, Loader2 } from "lucide-react";
 
 const PharmacyDashboard = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
+    const [stats, setStats] = useState({ verified_today: 0, pending: 0, rejected: 0, total_dispensed: 0 });
+    const [recentActivity, setRecentActivity] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetchDashboard();
+    }, []);
+
+    const fetchDashboard = async () => {
+        try {
+            const response = await api.get("/pharmacy/dashboard");
+            setStats(response.data.stats);
+            setRecentActivity(response.data.recent_activity || []);
+        } catch (error) {
+            console.error("Failed to fetch dashboard:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-[60vh]">
+                <Loader2 className="animate-spin text-primary" size={40} />
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-8">
@@ -39,10 +51,10 @@ const PharmacyDashboard = () => {
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatsCard title="Dispensed Today" value={mockStats.verified_today} icon={ClipboardCheck} color="success" subtitle="↑ 15% from yesterday" />
-                <StatsCard title="Pending Orders" value={mockStats.pending} icon={Clock} color="warning" subtitle="● On hold" />
-                <StatsCard title="Rejected" value={mockStats.rejected} icon={XCircle} color="destructive" subtitle="⚠ Requires action" />
-                <StatsCard title="Total Dispensed" value={mockStats.total_dispensed} icon={PackageCheck} color="primary" subtitle="All time" />
+                <StatsCard title="Dispensed Today" value={stats.verified_today} icon={ClipboardCheck} color="success" subtitle="↑ Today's count" />
+                <StatsCard title="Pending Orders" value={stats.pending} icon={Clock} color="warning" subtitle="● On hold" />
+                <StatsCard title="Rejected" value={stats.rejected} icon={XCircle} color="destructive" subtitle="⚠ Requires action" />
+                <StatsCard title="Total Dispensed" value={stats.total_dispensed} icon={PackageCheck} color="primary" subtitle="All time" />
             </div>
 
             {/* CTA - Verify Prescription */}
@@ -68,7 +80,6 @@ const PharmacyDashboard = () => {
             <div className="bg-card border border-border rounded-xl shadow-sm">
                 <div className="flex items-center justify-between p-6 pb-4 border-b border-border">
                     <h3 className="text-lg font-bold font-lexend text-foreground">Recent Activity</h3>
-                    <button className="text-sm text-primary font-medium hover:underline">View All Records</button>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
@@ -83,23 +94,33 @@ const PharmacyDashboard = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {mockRecentActivity.map((item, index) => (
-                                <tr key={index} className="border-b border-border/50 hover:bg-secondary/50 transition-colors">
-                                    <td className="py-4 px-6 font-mono text-primary font-bold text-xs">{item.rx_code}</td>
-                                    <td className="py-4 px-6 font-semibold text-foreground">{item.patient}</td>
-                                    <td className="py-4 px-6 text-muted-foreground">{item.doctor}</td>
-                                    <td className="py-4 px-6 text-muted-foreground text-xs">{item.medicines}</td>
-                                    <td className="py-4 px-6 text-muted-foreground">{item.time}</td>
-                                    <td className="py-4 px-6">
-                                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${item.status === "Dispensed"
-                                                ? "bg-emerald-500/10 text-emerald-500"
-                                                : "bg-amber-500/10 text-amber-500"
-                                            }`}>
-                                            {item.status === "Dispensed" ? "● " : "○ "}{item.status}
-                                        </span>
+                            {recentActivity.length > 0 ? (
+                                recentActivity.map((item, index) => (
+                                    <tr key={index} className="border-b border-border/50 hover:bg-secondary/50 transition-colors">
+                                        <td className="py-4 px-6 font-mono text-primary font-bold text-xs">{item.rx_code}</td>
+                                        <td className="py-4 px-6 font-semibold text-foreground">{item.patient_name}</td>
+                                        <td className="py-4 px-6 text-muted-foreground">{item.doctor_name}</td>
+                                        <td className="py-4 px-6 text-muted-foreground text-xs">{item.medicines}</td>
+                                        <td className="py-4 px-6 text-muted-foreground">{item.time}</td>
+                                        <td className="py-4 px-6">
+                                            <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${item.status === "Dispensed"
+                                                    ? "bg-emerald-500/10 text-emerald-500"
+                                                    : item.status === "Rejected"
+                                                        ? "bg-red-500/10 text-red-500"
+                                                        : "bg-amber-500/10 text-amber-500"
+                                                }`}>
+                                                {item.status === "Dispensed" ? "● " : "○ "}{item.status}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan="6" className="py-8 text-center text-muted-foreground">
+                                        No recent activity. Start by verifying a prescription.
                                     </td>
                                 </tr>
-                            ))}
+                            )}
                         </tbody>
                     </table>
                 </div>

@@ -11,35 +11,33 @@ export const AuthProvider = ({ children }) => {
 
     useEffect(() => {
         const token = localStorage.getItem("pharmacy_token");
-        if (token) {
-            setUser({ role: "pharmacy", token });
+        const savedUser = localStorage.getItem("pharmacy_user");
+        if (token && savedUser) {
+            try {
+                setUser({ ...JSON.parse(savedUser), token });
+            } catch {
+                setUser({ role: "pharmacy", token });
+            }
         }
         setLoading(false);
     }, []);
 
     const login = async (email, password) => {
-        // Dummy testing credentials
-        if (email === "pharmacy@healthconnect.com" && password === "password123") {
-            const dummyUser = { id: 1, name: "City Medical Store", role: "pharmacy" };
-            const dummyToken = "dummy-jwt-token-pharmacy";
-            localStorage.setItem("pharmacy_token", dummyToken);
-            setUser({ ...dummyUser, token: dummyToken });
-            return { success: true };
-        }
-
         try {
-            const response = await api.post("/auth/login/", { email, password, role: "pharmacy" });
-            const { access, pharmacy } = response.data;
-            localStorage.setItem("pharmacy_token", access);
-            setUser({ ...pharmacy, token: access });
+            const response = await api.post("/auth/login", { email, password });
+            const { token, pharmacy } = response.data;
+            localStorage.setItem("pharmacy_token", token);
+            localStorage.setItem("pharmacy_user", JSON.stringify(pharmacy));
+            setUser({ ...pharmacy, token });
             return { success: true };
         } catch (error) {
-            return { success: false, message: error.response?.data?.error || "Login failed" };
+            return { success: false, message: error.response?.data?.message || "Login failed" };
         }
     };
 
     const logout = () => {
         localStorage.removeItem("pharmacy_token");
+        localStorage.removeItem("pharmacy_user");
         setUser(null);
         window.location.href = "/login";
     };
