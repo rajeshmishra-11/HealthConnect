@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-
+import { AuthProvider } from './contexts/AuthContext';
+import ProtectedRoute from './components/common/ProtectedRoute';
 
 import LandingPage from './pages/LandingPage';
+import LoginPage from './pages/LoginPage';
 
 
 function App() {
@@ -23,13 +25,13 @@ function App() {
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<LandingPage {...themeProps} />} />
-        {/* <Route path="/login" element={<LoginPage {...themeProps} />} />
+        <Route path="/login" element={<LoginPage {...themeProps} />} />
         <Route path="/register" element={<PatientRegister {...themeProps} />} />
         <Route path="/register/success" element={<RegistrationSuccess {...themeProps} />} />
-        <Route path="/about" element={<AboutPage {...themeProps} />} /> */}
+        <Route path="/about" element={<AboutPage {...themeProps} />} />
 
         {/* Protected Routes */}
-        {/* <Route path="/dashboard" element={
+        <Route path="/dashboard" element={
           <ProtectedRoute><PatientDashboard {...themeProps} /></ProtectedRoute>
         } />
         <Route path="/records" element={
@@ -40,10 +42,10 @@ function App() {
         } />
         <Route path="/profile" element={
           <ProtectedRoute><PatientProfile {...themeProps} /></ProtectedRoute>
-        } /> */}
+        } />
 
         {/* Fallback */}
-        {/* <Route path="*" element={<Navigate to="/" replace />} /> */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AuthProvider>
   );

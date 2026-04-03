@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Sun, Moon, LogIn, UserPlus, Globe, LayoutDashboard, Menu, X } from 'lucide-react';
-// import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 
 const PublicNavbar = ({ darkMode, setDarkMode }) => {
     const { user } = useAuth();
