@@ -5,6 +5,8 @@ import ProtectedRoute from './components/common/ProtectedRoute';
 
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
+import PatientRegister from './pages/PatientRegister';
+import RegistrationSuccess from './pages/RegistrationSuccess';
 
 
 function App() {
