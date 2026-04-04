@@ -30,7 +30,16 @@ const PublicNavbar = ({ darkMode, setDarkMode }) => {
                         fontSize: '18px', fontWeight: '900', background: 'var(--primary)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white',
                         boxShadow: '0 4px 12px rgba(124, 58, 237, 0.2)'
-                    }}>HC</div>
+                    }}><img
+                            src="/favicon.svg"   // 👉 put your logo path here
+                            alt="HealthConnect Logo"
+                            style={{
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover'
+                            }}
+                        />
+                    </div>
                     <span className="logo-text" style={{ fontSize: '22px', fontWeight: '900', color: 'var(--text)', letterSpacing: '-0.5px' }}>HealthConnect</span>
                 </Link>
 
@@ -68,13 +77,13 @@ const PublicNavbar = ({ darkMode, setDarkMode }) => {
                 </div>
 
                 {/* Mobile Menu Toggle */}
-                <button 
-                    className="show-mobile-flex" 
+                <button
+                    className="show-mobile-flex"
                     onClick={toggleMobileMenu}
-                    style={{ 
-                        display: 'none', 
-                        background: 'none', 
-                        border: 'none', 
+                    style={{
+                        display: 'none',
+                        background: 'none',
+                        border: 'none',
                         color: 'var(--text)',
                         cursor: 'pointer'
                     }}
@@ -116,7 +125,7 @@ const PublicNavbar = ({ darkMode, setDarkMode }) => {
                             {darkMode ? <Sun size={20} /> : <Moon size={20} />}
                         </button>
                     </div>
-                    
+
                     {user ? (
                         <Link to="/dashboard" className="btn btn-primary btn-full" onClick={toggleMobileMenu}>
                             <LayoutDashboard size={18} /> DASHBOARD
